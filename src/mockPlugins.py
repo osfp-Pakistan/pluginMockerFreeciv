@@ -44,16 +44,19 @@ class Tile:
         return True
     
     def set_mask(self, k, v):
+        
         self.mask[k] = v
 
     def get_mask(self, k):
         if k not in self.mask:
             return "."
+        #if k == "map_owner":
+        #    print(self.mask[k])
         return self.mask[k]
         
     def __init__(self, baseTile):
         self.baseTile = baseTile
-        self.aragoTile = mapToArago[baseTile]
+        self.aragoTile = baseTile #mapToArago[baseTile]
         self.mask = {}
 #        self.irrigated = "0"
 #        self.ressource = ' '
@@ -80,8 +83,12 @@ class Line:
             self.append_tile(Tile(t))
         
     def append_mask(self, maskname, maskline):
-        for k, v in zip(self.cContainer, maskline):
-            k.set_mask(maskname, v)
+        if maskline.count(',') == 0:
+            for k, v in zip(self.cContainer, maskline):
+                k.set_mask(maskname, v)
+        else:
+            for k, v in zip(self.cContainer, maskline.split(",")):
+                k.set_mask(maskname, v)
     
     def append_tile(self, newtile):
         self.cContainer.append(newtile)
@@ -135,6 +142,7 @@ class Block:
                 for o in list(l):
                     fullstring += o.get_mask(m)+","
                     mStr += o.get_mask(m)+","
+                    
             mapC.append(mStr[:-1])
         return (fullstring[:-1],mapC)
 
@@ -142,6 +150,8 @@ def convert_map(coreData):
     mapM = []
     for s in zip(*coreData.values()):
         for k, v in zip(coreData.keys(), s):
+            #print(coreData["map_owner"])
+            
             if (k == "map_t"):
                 myLine = Line(v)
                 mapM.append(myLine)
@@ -174,14 +184,15 @@ def read_data(fname):
     for k in str.split("\n"):
         if cpSlice:
             if (not k.startswith("label")):
-                m = re.search('(.*_)(\d*)=\"(.*)\"', k)
+                m = re.search('map_(.*_)(\d*)=\"(.*)\"', k)
                 if (m != None):
                     id = "map_" + m.group(1)
                     if id not in sData:
                         sData[id] = []
+                        
                     sData[id].append(m.group(3))
                 else:
-                    m = re.search('(\D*)(\d*)=\"(.*)\"', k)
+                    m = re.search('map_(\D*)(\d*)=\"(.*)\"', k)
                     if (m != None):
                         id = "map_" + m.group(1)
                         if id not in sData:
@@ -194,8 +205,34 @@ def read_data(fname):
             cpSlice = False
     return sData
 # Read map / save
+
+def split2len(s, n):
+    def _f(s, n):
+        while s:
+            yield s[:n]
+            s = s[n:]
+    return list(_f(s, n))
+    
+
 print("Load sources...")
 sys.path.insert(0, os.path.abspath(r'plugins'))
+#cPar = {'maps': ['g,g,g,l,h,l,l,b,b,g,l,l,h,h,b,h,h,h,h,l,h,g,h,h,i', '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', '1,0,0,1,1,0,0,0,0,1,4,0,0,1,0,4,4,4,0,1,0,4,0,1,0', '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,2', '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', 'p,.,.,.,.,.,.,f,.,.,i,.,.,.,f,.,.,n,.,.,.,.,.,.,.', '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', '-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-', '-,-,190,-,190,-,-,-,-,-,-,-,-,-,132,-,-,-,-,132,-,-,-,-,-', '1,1,2,2,2,1,1,1,1,1,1,1,1,1,2,1,1,1,2,2,2,2,2,2,2', '12,12,12,12,12,12,12,-,-,12,12,12,12,12,-,12,12,12,12,12,12,12,12,12,12']}
+#aktMod = __import__("scoreIrrogation")
+#useLine = "h,i,h,h,g,h,h,c,h,c,c,h,c,.,.,n,.,.,.,.,.,.,.,.,n,.,s,.,.,.,.,.,.,.,r,.,.,.,0,0,0,0,1,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-,,,-,,,-,-,,,2,4,6,2,4,6,,,-,2,4,6,,,-,-,,,-,,,-"
+#size = 5
+#if (hasattr(aktMod, 'window_slice_size')):
+#    size = aktMod.window_slice_size()[0] #quad only!
+##wantedSet = coreData.keys()
+#if (hasattr(aktMod, 'needed_maps')):
+#    wantedSet = aktMod.needed_maps()
+#
+##print(cPar['maps'][6])
+#
+#answer = aktMod.calculate(**cPar)
+#
+#print(answer)
+#
+#exit(0)
 for fname in glob.iglob('data/*'):
     print("Use: " + fname)
     coreData = read_data(fname)
@@ -209,15 +246,18 @@ for fname in glob.iglob('data/*'):
         if (hasattr(aktMod, 'window_slice_size')):
             size = aktMod.window_slice_size()[0] #quad only!
         wantedSet = coreData.keys()
+        
         if (hasattr(aktMod, 'needed_maps')):
             wantedSet = aktMod.needed_maps()
             
         res = generate_dataset(size)
         #Apply data now
-        storeName = os.path.basename(fname)+"_"+modName+"_full.csv"
-        f = open(storeName,"w")
+        storeName = "Run_"+modName+"_full.csv"
+        f = open(storeName,"a")
         for u in res:
             full,cPar["maps"] = u.get_line(wantedSet)
+            #print(cPar['maps'][6])
+            #print(cPar)
             answer = aktMod.calculate(**cPar)
             f.write(full+","+str(answer)+"\n")
         f.close()

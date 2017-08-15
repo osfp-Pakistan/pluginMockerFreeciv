@@ -1,5 +1,4 @@
 import glob
-import random
 import re
 import os
 import sys
@@ -50,21 +49,12 @@ class Tile:
     def get_mask(self, k):
         if k not in self.mask:
             return "."
-        #if k == "map_owner":
-        #    print(self.mask[k])
         return self.mask[k]
         
     def __init__(self, baseTile):
         self.baseTile = baseTile
-        self.aragoTile = baseTile #mapToArago[baseTile]
-        self.mask = {}
-#        self.irrigated = "0"
-#        self.ressource = ' '
-#        if (self.can_be_irrigated()):
-#            if (random.randint(0, 100) < 20):
-#                self.irrigated = "1"
-#                
-    
+        self.aragoTile = baseTile #mapToArago[baseTile] #Savegames are different !?
+        self.mask = {}   
     
     def _get_char(self):
         return self.baseTile
@@ -142,7 +132,6 @@ class Block:
                 for o in list(l):
                     fullstring += o.get_mask(m)+","
                     mStr += o.get_mask(m)+","
-                    
             mapC.append(mStr[:-1])
         return (fullstring[:-1],mapC)
 
@@ -150,12 +139,9 @@ def convert_map(coreData):
     mapM = []
     for s in zip(*coreData.values()):
         for k, v in zip(coreData.keys(), s):
-            #print(coreData["map_owner"])
-            
             if (k == "map_t"):
                 myLine = Line(v)
                 mapM.append(myLine)
-            
             myLine.append_mask(k, v)
     return mapM
   
@@ -171,9 +157,6 @@ def generate_dataset(tileSize):
             container.append(generate_new_block(i, l, tileSize))
         i += 1 
     return container
-
-
-
 
 def read_data(fname):
     sData = {}
@@ -206,33 +189,9 @@ def read_data(fname):
     return sData
 # Read map / save
 
-def split2len(s, n):
-    def _f(s, n):
-        while s:
-            yield s[:n]
-            s = s[n:]
-    return list(_f(s, n))
-    
 
 print("Load sources...")
 sys.path.insert(0, os.path.abspath(r'plugins'))
-#cPar = {'maps': ['g,g,g,l,h,l,l,b,b,g,l,l,h,h,b,h,h,h,h,l,h,g,h,h,i', '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', '1,0,0,1,1,0,0,0,0,1,4,0,0,1,0,4,4,4,0,1,0,4,0,1,0', '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,2', '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', 'p,.,.,.,.,.,.,f,.,.,i,.,.,.,f,.,.,n,.,.,.,.,.,.,.', '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', '-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-', '-,-,190,-,190,-,-,-,-,-,-,-,-,-,132,-,-,-,-,132,-,-,-,-,-', '1,1,2,2,2,1,1,1,1,1,1,1,1,1,2,1,1,1,2,2,2,2,2,2,2', '12,12,12,12,12,12,12,-,-,12,12,12,12,12,-,12,12,12,12,12,12,12,12,12,12']}
-#aktMod = __import__("scoreIrrogation")
-#useLine = "h,i,h,h,g,h,h,c,h,c,c,h,c,.,.,n,.,.,.,.,.,.,.,.,n,.,s,.,.,.,.,.,.,.,r,.,.,.,0,0,0,0,1,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-,,,-,,,-,-,,,2,4,6,2,4,6,,,-,2,4,6,,,-,-,,,-,,,-"
-#size = 5
-#if (hasattr(aktMod, 'window_slice_size')):
-#    size = aktMod.window_slice_size()[0] #quad only!
-##wantedSet = coreData.keys()
-#if (hasattr(aktMod, 'needed_maps')):
-#    wantedSet = aktMod.needed_maps()
-#
-##print(cPar['maps'][6])
-#
-#answer = aktMod.calculate(**cPar)
-#
-#print(answer)
-#
-#exit(0)
 for fname in glob.iglob('data/*'):
     print("Use: " + fname)
     coreData = read_data(fname)
@@ -256,8 +215,6 @@ for fname in glob.iglob('data/*'):
         f = open(storeName,"a")
         for u in res:
             full,cPar["maps"] = u.get_line(wantedSet)
-            #print(cPar['maps'][6])
-            #print(cPar)
             answer = aktMod.calculate(**cPar)
             f.write(full+","+str(answer)+"\n")
         f.close()

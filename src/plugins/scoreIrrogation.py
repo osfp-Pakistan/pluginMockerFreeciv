@@ -21,7 +21,6 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]
     
-    
 class Block:
     def __init__(self):
         self.innerHash = {}
@@ -59,10 +58,10 @@ def is_irrigated(tile):
         return False
     return int(tile) % 2 == 1
 
-
+##Interface functions
 
 def name():
-    return "tileGoodness"
+    return "scoreIrrogation"
 
 def ogit_type():
     return "Tile"
